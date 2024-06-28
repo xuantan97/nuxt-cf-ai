@@ -34,15 +34,14 @@ export default defineEventHandler(async (event) => {
             method: 'POST',
             url: url,
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-            data
+            data: { messages: data }
         };
-        console.log(options);
 
         try {
             const response: AxiosResponse<CloudflareAIResponse> = await axios.request(options);
             return response.data;
         } catch (error) {
-            console.error("Error calling Cloudflare AI:", error);
+            console.log(error);
             return { error: "An error occurred" };
         }
     }
