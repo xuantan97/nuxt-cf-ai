@@ -7,29 +7,45 @@ interface CloudflareAIResponse {
 
 export default defineEventHandler(async (event) => {
     if (event.method == "POST") {
-        const body = await readBody(event);
-        if (!body.model || !body.input) {
+        const body = await readFormData(event);
+        if (!body || !body.get('model') || !body.get('input')) {
             return { error: "model and input are required" };
         }
-        const apiKey = process.env.CLOUDFLARE_AI_KEY; // Your API key
-        const url = "https://api.cloudflare.com/v1/<model>/<input>"; // Replace with specific URL
+        let model = body.get('model');
+        let input = body.get('input');
+        const apiKey = process.env.CLOUDFLARE_AI_KEY;
+        const account_id = process.env.CLOUDFLARE_ACCOUNT_ID;
+        const url = `https://api.cloudflare.com/client/v4/accounts/${account_id}/ai/run/${model}`; // Replace with specific URL
 
-        const data: { input: string } = { // Your data for the API call
-            input: "your input text",
-        };
 
-        const headers = {
-            Authorization: `Bearer ${apiKey}`,
+        const data = [
+            {
+                role: "system",
+                content: "You are a friendly assistan that helps write stories",
+            },
+            {
+                role: "user",
+                content:
+                    "Write a short story about a llama that goes on a journey to find an orange cloud ",
+            },
+        ];
+
+        const options = {
+            method: 'POST',
+            url: url,
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            data
         };
+        console.log(options);
 
         try {
-            const response: AxiosResponse<CloudflareAIResponse> = await axios.post(url, data, { headers });
+            const response: AxiosResponse<CloudflareAIResponse> = await axios.request(options);
             return response.data;
         } catch (error) {
             console.error("Error calling Cloudflare AI:", error);
             return { error: "An error occurred" };
         }
     }
-    return 1;
+    return "URL is working";
 
 });
